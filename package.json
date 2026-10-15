@@ -1,0 +1,24 @@
+{
+  "name": "opencode-custom",
+  "version": "1.0.0",
+  "description": "My personal OpenCode customizations as an installable plugin: the unattended overnight-mode plugin/commands/skill and the gitlab-issue-board skill.",
+  "type": "module",
+  "main": "index.js",
+  "exports": {
+    ".": "./index.js"
+  },
+  "scripts": {
+    "test": "node test/plugin.test.mjs"
+  },
+  "keywords": [
+    "opencode",
+    "opencode-plugin",
+    "skills",
+    "unattended",
+    "gitlab"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://gitlab.com/eathtespagheti/opencode-custom.git"
+  }
+}
