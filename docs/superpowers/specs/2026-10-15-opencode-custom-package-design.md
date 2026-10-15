@@ -71,5 +71,11 @@ machine with a single command, with no secrets involved.
 ## Left to the maintainer
 
 - Pick a license for the public repo (none chosen yet).
-- After the first push: `opencode plugin add`, verify, then delete the now
-  duplicated copies from `~/.config/opencode`.
+
+## Done
+
+- Repo created (public) and pushed; `opencode plugin add` installed on this
+  machine and verified — the skills/commands load from the installed package.
+- Duplicated copies moved out of `~/.config/opencode`: `skills/unattended`,
+  `skills/gitlab-issue-board`, `plugins/unattended.ts`,
+  `commands/unattended*.md`, `scripts/unattended-*`.
