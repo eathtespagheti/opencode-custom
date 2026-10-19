@@ -13,7 +13,9 @@ It ships two things, both written by me:
   across compaction and idle pauses, and logs every autonomous decision. Also
   provides the `/unattended` and `/unattended-off` commands and a digest script.
 - **`gitlab-issue-board`** — a skill for driving GitLab issue *boards* (columns
-  are labels) through `glab` and the GitLab API.
+  are labels) through `glab` and the GitLab API, plus the rest of the Free-tier
+  planning stack: milestones, labels, quick actions, due dates, time tracking,
+  cross-links, CSV import/export, the To-Do List, and service desk.
 
 ## Install
 
@@ -64,7 +66,7 @@ lib/
 skills/
   unattended/SKILL.md               # contract the agent loads
   unattended/scripts/               # digest + acceptance self-test
-  gitlab-issue-board/SKILL.md
+  gitlab-issue-board/SKILL.md       # boards + Free-tier planning toolkit
 commands/
   unattended.md, unattended-off.md
 docs/
