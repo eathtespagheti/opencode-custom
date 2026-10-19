@@ -1,6 +1,6 @@
 ---
 name: gitlab-issue-board
-description: Use when tracking work as GitLab issues in a repository whose project already has an issue board configured (bootstrap already done) — creating issues, moving cards between columns, editing, commenting, closing, deleting, or adding another board. Requires a GitLab-hosted repo with `glab` installed and authenticated. Do not use for repositories with no board or no issues yet, and do not use for non-GitLab trackers.
+description: Use when tracking work as GitLab issues in a repository whose project already has an issue board configured (bootstrap already done) — creating issues, moving cards between columns, editing, commenting, closing, deleting, or adding another board. Also covers the rest of GitLab's Free-tier planning toolkit: milestones, labels and metadata, quick actions, due dates, time tracking, cross-links, confidentiality, CSV import/export, the To-Do List, and service desk. Requires a GitLab-hosted repo with `glab` installed and authenticated. Do not use for repositories with no board or no issues yet, and do not use for non-GitLab trackers.
 ---
 
 # GitLab Issue Boards
@@ -118,6 +118,121 @@ When picking up work in a bootstrapped repo:
 7. **Never delete an issue** unless the human explicitly asked for deletion. Closing is the reversible option; deleting is not.
 
 Report back with the issue URL so the human can click through.
+
+## Free-tier planning toolkit (beyond the board)
+
+Boards are the visual layer. On the **Free** plan GitLab also gives you a full lightweight planning stack — use these before reaching for paid concepts like epics or iterations. Tier notes below are verified against the GitLab docs; when a feature is ambiguous, check the tier (recipe at the end) before relying on it.
+
+### Tiers at a glance
+
+| Feature | Free | Notes |
+|---|---|---|
+| Project issue boards | ✅ multiple | Group issue boards: **1** on Free |
+| Configurable boards / assignee lists | ❌ | Premium |
+| Milestones (project + group) | ✅ | start/due dates, burndown & burnup charts |
+| Labels (plain, priorities, colors) | ✅ | scoped labels (`status::todo`) are **Premium** |
+| Quick actions | ✅ | see table below |
+| Due dates | ✅ | `/due in 2 days`, `/due this Friday` |
+| Time tracking | ✅ | `/estimate`, `/spend`; timelog report |
+| Cross-linking issues | ✅ | `#123`, `group/project#123`, full URLs |
+| Confidential issues | ✅ | |
+| CSV export / import | ✅ | export is emailed as a CSV attachment |
+| To-Do List | ✅ | `/todo`, mark done |
+| Service Desk | ✅ | feature-frozen, not under active development |
+| Releases | ✅ basic | group-level release metrics are Ultimate |
+| Linked / blocking issues | ✅ | `/relate`, `/blocked_by`, `/blocks`, `/unlink` |
+| Weight | ⚠️ verify | shown on cards; confirm the API accepts it on Free |
+| Health status | ❌ Ultimate | |
+| Status (custom workflow) | ❌ Premium | |
+| Iterations | ❌ Premium | |
+| Epics / Roadmap | ❌ Premium | |
+| Saved views / Workplan | ⚠️ verify | check tier before using |
+
+### Milestones — the Free planning backbone
+
+Milestones are the closest Free equivalent to sprints. A milestone groups issues and merge requests toward a goal, with optional **start and due dates**. Group milestones can be applied to issues in any project of the group.
+
+```bash
+# list / create / close
+glab api "projects/:id/milestones?state=active"
+glab api --method POST "projects/:id/milestones" \
+  --raw-field title="Sprint 12" --raw-field start_date=2026-10-20 --raw-field due_date=2026-11-01
+glab api --method PUT "projects/:id/milestones/<milestone_id>" --raw-field state_event=close
+
+# assign to an issue (id, not title)
+glab issue update 42 --milestone "Sprint 12"     # or via quick action: /milestone %"Sprint 12"
+```
+
+- Use **milestones** when you need a timebox; use **boards** when you need flow.
+- The milestone view has burndown/burnup charts for free.
+- Milestone assignment is a single field — swapping it is idempotent, unlike labels.
+
+### Quick actions — fastest way to mutate an issue
+
+Quick actions are typed into the description or a comment and execute on save. They are all Free unless noted. They are the most token-efficient way to set several fields at once.
+
+| Action | Example | Effect |
+|---|---|---|
+| `/board_move` | `/board_move ~"In Progress"` | move card (only if the project has **one** board) |
+| `/label` | `/label ~bug ~"status::todo"` | add labels (scoped labels Premium) |
+| `/unlabel` | `/unlabel ~bug` | remove a label |
+| `/milestone` | `/milestone %"Sprint 12"` | set milestone |
+| `/due` | `/due in 2 days` | due date |
+| `/estimate` | `/estimate 8h` | time estimate |
+| `/spend` | `/spend 1h 2026-10-19` | log time |
+| `/relate` | `/relate #123` | mark related (non-blocking) |
+| `/blocked_by` | `/blocked_by #123` | this is blocked by #123 |
+| `/blocks` | `/blocks #123` | this blocks #123 |
+| `/unlink` | `/unlink #123` | remove a link/block |
+| `/assign` | `/assign @alex` | assignee |
+| `/todo` | `/todo` | add to your To-Do List |
+| `/close`, `/reopen` | `/close` | state |
+| `/confidential` | `/confidential` | mark confidential |
+| `/duplicate` | `/duplicate #99` | close as duplicate |
+| `/promote_to` | `/promote_to Incident` | change work item type |
+
+Post them with a note:
+
+```bash
+glab issue note 42 -m "/label ~bug
+/due in 2 days
+/blocked_by #17"
+```
+
+Do **not** use `/board_move` as your general move mechanism — it requires a single board and hides which label it swapped. The `glab issue update --label … --unlabel …` swap in [Moving a card](#moving-a-card-between-columns) is the reliable path.
+
+### Metadata the board does not show
+
+Some fields are useful for triage even though they never become a column:
+
+- **Due dates** — `/due`, `glab issue update 42 --due-date 2026-11-01`.
+- **Time tracking** — `/estimate 8h`, `/spend 2h`; read totals from the issue JSON.
+- **Cross-links / blocking** — `/relate`, `/blocked_by`, `/blocks`. This is how you express dependencies on Free; there is no dependency-graph UI.
+- **Confidentiality** — `/confidential` for security-sensitive work.
+- **To-Do List** — `/todo` puts an item on your personal list; the API is `glab api "todos"` and `glab api --method POST "todos" --raw-field target_type=Issue --raw-field target_id=<id>`.
+- **CSV** — export for offline analysis, import to bulk-create issues. Export is **per project**, not per group, and arrives by email.
+
+```bash
+# bulk-create from CSV (Free)
+glab api --method POST "projects/:id/issues/import" --form file=@issues.csv
+```
+
+### What you cannot do on Free (don't design around it)
+
+- **No scoped labels** (`status::todo`). Keep one status yourself by always swapping labels.
+- **No epics, iterations, roadmap, or health status.** Use parent issues, milestones, and due dates instead.
+- **No configurable boards, assignee lists, or milestone lists.** Columns are label-backed only.
+- **Only one group board.** Multiple project boards are fine.
+- **No custom issue status workflow.** Open/closed plus labels is the whole state machine.
+
+### Verify a feature's tier before using it
+
+```bash
+glab api "projects/:id" | python3 -c "import sys,json; print(json.load(sys.stdin)['namespace']['id'])"
+glab api "namespaces/<namespace_id>" | python3 -c "import sys,json; print(json.load(sys.stdin).get('plan'))"
+```
+
+If the plan is `free`, treat any feature above marked ⚠️ or ❌ as unavailable and fall back to labels + milestones.
 
 ## Common Mistakes
 
