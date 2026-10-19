@@ -70,7 +70,7 @@ machine with a single command, with no secrets involved.
 
 ## Left to the maintainer
 
-- Pick a license for the public repo (none chosen yet).
+- License: GNU General Public License v3.0 (see `LICENSE`).
 
 ## Done
 

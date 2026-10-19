@@ -1,5 +1,7 @@
 # opencode-custom
 
+Copyright (C) 2026 Fabio Sussarellu. Licensed under the GNU General Public License v3.0 — see [LICENSE](LICENSE).
+
 My personal [OpenCode](https://opencode.ai) customizations, packaged as an
 installable plugin so they follow me across machines and stay in sync through
 git.
