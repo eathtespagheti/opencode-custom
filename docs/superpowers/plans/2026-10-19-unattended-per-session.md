@@ -1,5 +1,7 @@
 # Unattended Per-Session State Implementation Plan
 
+**Status:** implemented (2026-10-19)
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Make unattended mode belong to one session and turn `/unattended-off` into an immediate handover that writes an unattended-only summary.

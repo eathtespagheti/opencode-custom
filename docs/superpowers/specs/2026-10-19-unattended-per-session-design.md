@@ -1,7 +1,7 @@
 # Unattended mode: per-session state and an in-place off toggle
 
 **Date:** 2026-10-19
-**Status:** design, awaiting approval
+**Status:** implemented
 **Supersedes:** the project-wide sentinel in
 `docs/superpowers/specs/2026-10-03-unattended-mode-design.md`
 
