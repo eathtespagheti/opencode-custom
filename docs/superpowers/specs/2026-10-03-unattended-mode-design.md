@@ -1,7 +1,12 @@
 # Unattended Mode for an OpenCode Session — Design
 
+> **Superseded (2026-10-19):** the project-wide sentinel described here caused
+> parallel sessions in one project to share the mode. State is now per session
+> and `/unattended-off` is an in-place handover. See
+> [`2026-10-19-unattended-per-session-design.md`](2026-10-19-unattended-per-session-design.md).
+
 - **Date:** 2026-10-03
-- **Status:** Draft, awaiting human review
+- **Status:** Superseded
 - **Author:** agent (brainstorming session)
 - **Topic:** `/unattended` — flip a live OpenCode session into unattended/overnight mode
 

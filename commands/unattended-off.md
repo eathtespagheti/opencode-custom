@@ -1,7 +1,10 @@
 ---
-description: Leave unattended mode and close out the run (write summary, present digest, remove sentinel)
+description: Leave unattended mode for this session (keep the running task; write an unattended-only summary)
 ---
 
-UNATTENDED MODE OFF — leave unattended mode now. Load the `unattended` skill if needed and follow its end-of-run procedure: write `.opencode/unattended/SUMMARY.md`, present the decisions and escalations to me, then remove `.opencode/unattended/ACTIVE`. Then continue normally and wait for me.
+UNATTENDED MODE OFF for this session. Do not stop or re-plan the current task:
+keep working on it in normal mode. Follow the off notice the plugin adds to
+your instructions — write the unattended-only summary where it says, present
+it, then continue and ask questions again when you need to.
 
 [[opencode-unattended:off]]

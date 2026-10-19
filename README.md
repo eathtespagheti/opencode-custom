@@ -8,10 +8,13 @@ git.
 
 It ships two things, both written by me:
 
-- **`unattended`** — flip a session into overnight mode. The plugin owns a
-  sentinel file, keeps the "no questions, decide conservatively" contract alive
-  across compaction and idle pauses, and logs every autonomous decision. Also
-  provides the `/unattended` and `/unattended-off` commands and a digest script.
+- **`unattended`** — flip a *session* into overnight mode. The plugin owns a
+  per-session record, keeps the "no questions, decide conservatively" contract
+  alive across compaction and idle pauses, and logs every autonomous decision.
+  Also provides the `/unattended` and `/unattended-off` commands and a digest
+  script. `/unattended-off` is an in-place handover: the task keeps running,
+  the session starts asking questions again, and you get a summary of the
+  decisions made while unattended.
 - **`gitlab-issue-board`** — a skill for driving GitLab issue *boards* (columns
   are labels) through `glab` and the GitLab API.
 
@@ -48,7 +51,7 @@ The plugin's `setup(ctx)` runs once at load and uses the OpenCode V2 plugin API:
 | --- | --- |
 | `unattended`, `gitlab-issue-board` skills | `ctx.skill.transform(...)` — read from `skills/` |
 | `/unattended`, `/unattended-off` commands | `ctx.command.transform(...)` — read from `commands/` |
-| sentinel arming, contract re-injection, idle nudges | `ctx.session.hook("prompt" \| "context")`, `ctx.event.subscribe` |
+| per-session arming, contract re-injection, idle nudges, handover notice | `ctx.session.hook("prompt" \| "context")`, `ctx.event.subscribe`, `ctx.storage` |
 
 No dependencies — plain ESM, the same shape the `superpowers` plugin uses.
 
@@ -57,7 +60,8 @@ No dependencies — plain ESM, the same shape the `superpowers` plugin uses.
 ```text
 index.js                            # plugin entry: { id, setup }
 lib/
-  unattended.js                     # the unattended plugin half (hooks, sentinel)
+  unattended.js                     # the unattended plugin half (hooks, contract, nudges)
+  unattended-state.js               # per-session state store + artifact paths
   register-skills.js                # skills/ -> native skills
   register-commands.js              # commands/ -> slash commands
   frontmatter.js                    # tiny SKILL.md frontmatter reader
@@ -70,8 +74,9 @@ commands/
 docs/
   unattended.md                     # how the unattended mode works
   superpowers/specs/                # design notes
+  superpowers/plans/                # implementation plans
 test/
-  plugin.test.mjs                   # registers 2 skills + 2 commands + hooks
+  plugin.test.mjs                   # skills, commands, hooks, per-session isolation
 ```
 
 ## Develop
