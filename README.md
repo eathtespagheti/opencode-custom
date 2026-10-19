@@ -51,7 +51,7 @@ The plugin's `setup(ctx)` runs once at load and uses the OpenCode V2 plugin API:
 | --- | --- |
 | `unattended`, `gitlab-issue-board` skills | `ctx.skill.transform(...)` — read from `skills/` |
 | `/unattended`, `/unattended-off` commands | `ctx.command.transform(...)` — read from `commands/` |
-| sentinel arming, contract re-injection, idle nudges | `ctx.session.hook("prompt" \| "context")`, `ctx.event.subscribe` |
+| per-session arming, contract re-injection, idle nudges, handover notice | `ctx.session.hook("prompt" \| "context")`, `ctx.event.subscribe`, `ctx.storage` |
 
 No dependencies — plain ESM, the same shape the `superpowers` plugin uses.
 
@@ -60,7 +60,8 @@ No dependencies — plain ESM, the same shape the `superpowers` plugin uses.
 ```text
 index.js                            # plugin entry: { id, setup }
 lib/
-  unattended.js                     # the unattended plugin half (hooks, sentinel)
+  unattended.js                     # the unattended plugin half (hooks, contract, nudges)
+  unattended-state.js               # per-session state store + artifact paths
   register-skills.js                # skills/ -> native skills
   register-commands.js              # commands/ -> slash commands
   frontmatter.js                    # tiny SKILL.md frontmatter reader
@@ -73,8 +74,9 @@ commands/
 docs/
   unattended.md                     # how the unattended mode works
   superpowers/specs/                # design notes
+  superpowers/plans/                # implementation plans
 test/
-  plugin.test.mjs                   # registers 2 skills + 2 commands + hooks
+  plugin.test.mjs                   # skills, commands, hooks, per-session isolation
 ```
 
 ## Develop
