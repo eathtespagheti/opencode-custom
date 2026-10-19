@@ -8,10 +8,13 @@ git.
 
 It ships two things, both written by me:
 
-- **`unattended`** — flip a session into overnight mode. The plugin owns a
-  sentinel file, keeps the "no questions, decide conservatively" contract alive
-  across compaction and idle pauses, and logs every autonomous decision. Also
-  provides the `/unattended` and `/unattended-off` commands and a digest script.
+- **`unattended`** — flip a *session* into overnight mode. The plugin owns a
+  per-session record, keeps the "no questions, decide conservatively" contract
+  alive across compaction and idle pauses, and logs every autonomous decision.
+  Also provides the `/unattended` and `/unattended-off` commands and a digest
+  script. `/unattended-off` is an in-place handover: the task keeps running,
+  the session starts asking questions again, and you get a summary of the
+  decisions made while unattended.
 - **`gitlab-issue-board`** — a skill for driving GitLab issue *boards* (columns
   are labels) through `glab` and the GitLab API.
 

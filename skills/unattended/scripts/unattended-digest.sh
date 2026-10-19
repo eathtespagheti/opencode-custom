@@ -2,8 +2,13 @@
 #
 # unattended-digest.sh — show what happened during an unattended run.
 #
-# Reads:
-#   <project>/.opencode/unattended/decisions.jsonl   (one JSON object per line)
+# Unattended state and artifacts are per session:
+#   <project>/.opencode/unattended/sessions/<session-id>/decisions.jsonl
+#   <project>/.opencode/unattended/sessions/<session-id>/SUMMARY.md
+#
+# The legacy project-wide layout is still readable when no session directory
+# exists:
+#   <project>/.opencode/unattended/decisions.jsonl
 #   <project>/.opencode/unattended/SUMMARY.md
 #
 # Prints two sections:
@@ -11,21 +16,74 @@
 #   ## ⚠️ Action needed               -- every line with "escalate": true
 #
 # Usage:
-#   unattended-digest.sh [project-dir]      # default: git root, else $PWD
+#   unattended-digest.sh [--session <id>] [project-dir]
+#
+# With no --session:
+#   * one session directory  -> use it
+#   * several                -> list them and exit 2
+#   * none                   -> read the legacy project-wide files
 #
 # NOTE: Notification is intentionally a no-op for now. To push this digest
-# somewhere, implement notify() below (an ntfy example is provided). A systemd
-# user timer intended to run this at ~07:00 is deliberately NOT installed yet,
-# because with no channel it would deliver nothing.
+# somewhere, implement notify() below (an ntfy example is provided).
 #
 set -euo pipefail
 
-PROJECT="${1:-}"
+SESSION=""
+PROJECT=""
+
+usage() {
+  sed -n '2,26p' "$0" | sed 's/^# \{0,1\}//'
+}
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --session)
+      SESSION="${2:-}"
+      shift 2
+      ;;
+    --session=*)
+      SESSION="${1#*=}"
+      shift
+      ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    *)
+      PROJECT="$1"
+      shift
+      ;;
+  esac
+done
+
 if [[ -z "$PROJECT" ]]; then
   PROJECT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 fi
 
-DIR="$PROJECT/.opencode/unattended"
+SESSIONS_ROOT="$PROJECT/.opencode/unattended/sessions"
+
+if [[ -n "$SESSION" ]]; then
+  # Match the plugin's sanitization.
+  SESSION="$(printf '%s' "$SESSION" | tr -c 'A-Za-z0-9._-' '_')"
+  DIR="$SESSIONS_ROOT/$SESSION"
+elif [[ -d "$SESSIONS_ROOT" ]]; then
+  mapfile -t SESSION_DIRS < <(find "$SESSIONS_ROOT" -mindepth 1 -maxdepth 1 -type d | sort)
+  count="${#SESSION_DIRS[@]}"
+  if [[ "$count" -eq 1 ]]; then
+    DIR="${SESSION_DIRS[0]}"
+    SESSION="$(basename "$DIR")"
+  elif [[ "$count" -eq 0 ]]; then
+    DIR="$PROJECT/.opencode/unattended"
+  else
+    echo "Multiple unattended sessions in $SESSIONS_ROOT:" >&2
+    for d in "${SESSION_DIRS[@]}"; do echo "  $(basename "$d")" >&2; done
+    echo "Pick one with --session <id>." >&2
+    exit 2
+  fi
+else
+  DIR="$PROJECT/.opencode/unattended"
+fi
+
 JSONL="$DIR/decisions.jsonl"
 SUMMARY="$DIR/SUMMARY.md"
 
@@ -84,6 +142,10 @@ render() {
 digest=""
 digest+="# Unattended run digest"$'\n'
 digest+="Project: $PROJECT"$'\n'
+if [[ -n "$SESSION" ]]; then
+  digest+="Session: $SESSION"$'\n'
+fi
+digest+="State:   $DIR"$'\n'
 
 if [[ -f "$JSONL" ]]; then
   fyi="$(grep -v '"escalate":true' "$JSONL" | grep -v '"escalate": true' | render || true)"

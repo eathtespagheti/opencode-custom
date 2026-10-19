@@ -1,0 +1,3 @@
+# Unattended session state and per-run artifacts (local, never committed)
+.opencode/
+DECISIONS.md
