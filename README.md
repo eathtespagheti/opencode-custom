@@ -155,16 +155,10 @@ test/
 ## Develop
 
 ```bash
-npm test                                                     # plugin registration
-node skills/unattended/scripts/unattended-selftest.mjs       # unattended behaviour
-```
-
-```bash
+npm test                             # plugin registration (needs node)
+node skills/unattended/scripts/unattended-selftest.mjs
 python3 test/docs-sync.test.py       # docs-sync checker + agent/skill shape (no node needed)
 ```
-
-The `npm test` suite drives the real code against a mock OpenCode V2 context —
-no live TUI or model needed.
 
 Both drive the real code against a mock OpenCode V2 context — no live TUI or
 model needed.
