@@ -1,14 +1,14 @@
 {
   "name": "opencode-custom",
   "version": "1.0.0",
-  "description": "My personal OpenCode customizations as an installable plugin: the unattended overnight-mode plugin/commands/skill and the gitlab-issue-board skill.",
+  "description": "Installable plugin for OpenCode customizations: docs-keeping (docs-keeper agent + docs-sync skill), unattended overnight mode, gitlab-issue-board, and obsidian/json-canvas skills.",
   "type": "module",
   "main": "index.js",
   "exports": {
     ".": "./index.js"
   },
   "scripts": {
-    "test": "node test/plugin.test.mjs"
+    "test": "python3 test/docs-sync.test.py"
   },
   "keywords": [
     "opencode",
