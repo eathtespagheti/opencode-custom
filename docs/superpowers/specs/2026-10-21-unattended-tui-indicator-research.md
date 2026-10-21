@@ -1,7 +1,7 @@
 # Unattended indicator in the OpenCode TUI — research and recommendation
 
 **Date:** 2026-10-21
-**Status:** research complete — recommendation ready, not implemented
+**Status:** research complete — implemented (see §9)
 **Ticket:** [#2 — Research: unattended-mode indicator in the OpenCode sidebar](https://gitlab.com/eathtespagheti/opencode-custom/-/issues/2)
 **Target:** OpenCode **v2.1.1** (`/usr/bin/opencode`), V2 plugin + CLI (TUI) plugin APIs
 
@@ -270,3 +270,47 @@ A separate implementation ticket:
 4. Toast on arm/disarm as a complement.
 5. Acceptance: TUI shows the badge for an armed session, hides it when off or
    unknown, and updates live on `/unattended` and `/unattended-off`.
+
+## 9. What was built (issue #3)
+
+Implemented as recommended:
+
+| File | Role |
+| --- | --- |
+| `rpc.js` | The `unattended` contract: `status` method, `changed` event. A plain object, because the TUI host does not expose `@opencode/plugin/rpc`; the server prefers the host's `Rpc.define` and falls back to the plain definition. |
+| `lib/unattended.js` | Registers the RPC (`ctx.rpc.register`) and emits `changed` from `arm()` / `disarm()`. The record stays the single source of truth. |
+| `lib/indicator.js` | The badge state machine: known/unknown per session, retries, stale-answer guard, strict parsing. Plain JS, unit tested. |
+| `tui.jsx` | The TUI half: `context.client.rpc(...)` + `context.ui.slot({ append: "sidebar.footer" })`, wired to a Solid signal. |
+
+### What the research did not know
+
+1. **The TUI half is loaded from the server plugin list.** A package listed in
+   `opencode.json` is enough — the host resolves the `tui` entrypoint of the
+   package. No `cli.json` entry is needed. But the host only *activates* the TUI
+   half of a plugin the server reports, so a server without the plugin shows no
+   badge at all (which is the wanted outcome anyway).
+2. **The slot's `render` runs again on every state change.** Creating a
+   `createEffect` inside it therefore creates a new effect per repaint, and a
+   fetch inside that effect writes state, which repaints, which creates another
+   effect — a render storm (observed as OpenTUI `OutputBackpressure` errors).
+   The implementation keeps the state in a plain map, bumps a signal only when
+   something really changed, and fetches on a session change instead of in an
+   effect.
+3. **The first status call can fail or hang** while the server plugin is still
+   loading. The indicator retries (0.5 s, 2 s, 5 s), times a single call out
+   after 10 s, and falls back to a 60 s safety-net refresh.
+
+### Verified against a live opencode v2.1.1
+
+- the badge shows `○ unattended` for a session that is known to be off, and
+  `● unattended` while it is armed;
+- it flips live in both directions when the session is armed or disarmed
+  (driven by the `changed` event);
+- with the RPC unavailable nothing is rendered at all — unknown is never shown
+  as "off";
+- two sessions show independent badges.
+
+### Not done
+
+- The toast on arm/disarm (a nice complement) is not implemented.
+- The home screen has no sidebar, so the badge only exists in a session view.

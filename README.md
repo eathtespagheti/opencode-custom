@@ -14,7 +14,10 @@ It ships three things, all written by me:
   Also provides the `/unattended` and `/unattended-off` commands and a digest
   script. `/unattended-off` is an in-place handover: the task keeps running,
   the session starts asking questions again, and you get a summary of the
-  decisions made while unattended.
+  decisions made while unattended. The TUI shows a badge in the sidebar that
+  says whether the active session is unattended — `● unattended` (amber) while
+  it is, `○ unattended` (dim) when it is not, and nothing at all when the
+  state is unknown.
 - **`gitlab-issue-board`** — a skill for driving GitLab issue *boards* (columns
   are labels) through `glab` and the GitLab API, plus the rest of the Free-tier
   planning stack: milestones, labels, quick actions, due dates, time tracking,
@@ -118,16 +121,23 @@ The plugin's `setup(ctx)` runs once at load and uses the OpenCode V2 plugin API:
 | `docs-keeper` subagent (per-project fence + prompt) | `ctx.agent.transform(...)` — read from `agents/`, config from `.opencode/docs-sync.json` |
 | `/unattended`, `/unattended-off` commands | `ctx.command.transform(...)` — read from `commands/` |
 | per-session arming, contract re-injection, idle nudges, handover notice | `ctx.session.hook("prompt" \| "context")`, `ctx.event.subscribe`, `ctx.storage` |
+| `unattended` RPC (`status` method, `changed` event) | `ctx.rpc.register(...)` — the contract lives in `rpc.js` |
+| the sidebar badge of the TUI | the `./tui` entrypoint (`tui.jsx`): `context.client.rpc(...)` + `context.ui.slot(...)` |
 
-No dependencies — plain ESM, the same shape the `superpowers` plugin uses.
+No dependencies — plain ESM, the same shape the `superpowers` plugin uses. The
+TUI half imports `@opencode/plugin/tui` and `solid-js`, both provided by
+OpenCode itself.
 
 ## Layout
 
 ```text
 index.js                            # plugin entry: { id, setup }
+rpc.js                              # the "unattended" RPC contract (shared by both halves)
+tui.jsx                             # TUI (CLI) plugin entry: the sidebar badge
 lib/
   unattended.js                     # the unattended plugin half (hooks, contract, nudges)
   unattended-state.js               # per-session state store + artifact paths
+  indicator.js                      # badge state machine (unknown is not off)
   register-skills.js                # skills/ -> native skills
   register-commands.js              # commands/ -> slash commands
   register-agents.js                # agents/ -> subagents ({{VAR}} substitution)
@@ -148,7 +158,7 @@ docs/
 agents/
   docs-keeper.md                    # generic subagent definition
 test/
-  plugin.test.mjs                   # skills, commands, hooks, per-session isolation
+  plugin.test.mjs                   # skills, commands, hooks, RPC, per-session isolation
   docs-sync.test.py                 # checker script + agent/skill shape
 ```
 

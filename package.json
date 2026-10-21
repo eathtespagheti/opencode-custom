@@ -5,7 +5,9 @@
   "type": "module",
   "main": "index.js",
   "exports": {
-    ".": "./index.js"
+    ".": "./index.js",
+    "./tui": "./tui.jsx",
+    "./rpc": "./rpc.js"
   },
   "scripts": {
     "test": "python3 test/docs-sync.test.py"

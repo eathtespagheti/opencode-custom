@@ -38,6 +38,8 @@ const prompts = []
 const storage = new Map()
 const events = []
 const contexts = new Map()
+const rpcs = new Map()
+const rpcEvents = []
 
 const storageApi = {
   get: async (key) => storage.get(key),
@@ -78,6 +80,20 @@ const ctx = {
         }
       },
     }),
+  },
+  rpc: {
+    register: async (definition, implementation) => {
+      rpcs.set(definition?.id, { definition, implementation })
+      return {
+        dispose: () => rpcs.delete(definition?.id),
+        events: {
+          emit: async (name, payload) => {
+            rpcEvents.push({ id: definition?.id, name, payload })
+            return true
+          },
+        },
+      }
+    },
   },
 }
 
@@ -235,6 +251,74 @@ await sleep(80)
 check("assistant end marker disarms silently", record("ses_end")?.armed === false)
 check("assistant end marker requests no summary", record("ses_end")?.pendingNotice !== true)
 check("assistant end marker suppresses the nudge", !prompts.some((p) => p.sessionID === "ses_end"))
+
+// ── RPC: the read-only projection of the state, for the TUI ─────────────────
+check("registers the unattended RPC", rpcs.has("unattended"))
+const rpc = rpcs.get("unattended")
+check("RPC exposes a status method", typeof rpc?.implementation?.status === "function")
+check("RPC contract has an id and a changed event",
+  rpc?.definition?.id === "unattended" && !!rpc?.definition?.events?.changed)
+
+const rpcStatus = async (sessionID) => rpc.implementation.status({ sessionID })
+check("RPC status is off for an unknown session", (await rpcStatus("ses_never"))?.armed === false)
+check("RPC status is on for an armed session", (await rpcStatus("ses_boot"))?.armed === true)
+check("RPC status carries the armed-at stamp", typeof (await rpcStatus("ses_boot"))?.since === "string")
+check("RPC status is off for a disarmed session", (await rpcStatus("ses_a"))?.armed === false)
+
+const armEvent = rpcEvents.find((e) => e.id === "unattended" && e.name === "changed" && e.payload?.armed === true)
+check("arming emits a changed event", !!armEvent)
+check("the changed event names the session", armEvent?.payload?.sessionID === "ses_a")
+
+const disarmEvent = rpcEvents.find((e) => e.id === "unattended" && e.name === "changed" && e.payload?.armed === false)
+check("disarming emits a changed event", !!disarmEvent)
+check("the changed event names the disarmed session", disarmEvent?.payload?.sessionID === "ses_a")
+
+// ── Indicator: unknown is not off ────────────────────────────────────────────
+const { createIndicator } = await import(path.join(ROOT, "lib", "indicator.js"))
+
+const fakeApi = (armed) => ({
+  status: async () => ({ armed }),
+  events: { on: () => () => {} },
+})
+
+const failing = createIndicator({
+  api: { status: async () => { throw new Error("rpc.unavailable") }, events: { on: () => () => {} } },
+  retryDelays: [],
+})
+await failing.refresh("ses_x")
+check("a failing status leaves the state unknown", failing.get("ses_x") === undefined)
+check("a failing status does not claim 'off'", failing.isKnown("ses_x") === false)
+
+const off = createIndicator({ api: fakeApi(false), retryDelays: [] })
+await off.refresh("ses_off")
+check("a known state is remembered", off.get("ses_off")?.armed === false)
+
+const on = createIndicator({ api: fakeApi(true), retryDelays: [] })
+await on.refresh("ses_on")
+check("an armed session is remembered", on.get("ses_on")?.armed === true)
+
+let notifications = 0
+const watched = createIndicator({ api: fakeApi(false), retryDelays: [] })
+watched.subscribe(() => { notifications++ })
+await watched.refresh("ses_w")
+check("a new state notifies the view", notifications === 1)
+await watched.refresh("ses_w")
+check("an unchanged state does not notify the view", notifications === 1)
+
+watched.applyEvent({ sessionID: "ses_w", armed: true })
+check("a change event updates the state", watched.get("ses_w")?.armed === true)
+check("a change event notifies the view", notifications === 2)
+
+const malformed = createIndicator({
+  api: { status: async () => ({}), events: { on: () => () => {} } },
+  retryDelays: [],
+})
+await malformed.refresh("ses_bad")
+check("an unreadable status response leaves the state unknown", malformed.get("ses_bad") === undefined)
+
+const badEvent = createIndicator({ api: fakeApi(false), retryDelays: [] })
+badEvent.applyEvent({ sessionID: "ses_e" })
+check("an event without a boolean armed is ignored", badEvent.get("ses_e") === undefined)
 
 // ── Cleanup ────────────────────────────────────────────────────────────────
 cleanup()
