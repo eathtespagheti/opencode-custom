@@ -6,11 +6,16 @@
   "main": "index.js",
   "exports": {
     ".": "./index.js",
-    "./tui": "./tui.jsx",
+    "./tui": "./tui.js",
     "./rpc": "./rpc.js"
   },
   "scripts": {
-    "test": "python3 test/docs-sync.test.py"
+    "build": "node scripts/build-tui.mjs",
+    "test": "node test/plugin.test.mjs && python3 test/docs-sync.test.py"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.29.0",
+    "babel-preset-solid": "^1.9.16"
   },
   "keywords": [
     "opencode",

@@ -1,3 +1,6 @@
 # Unattended session state and per-run artifacts (local, never committed)
 .opencode/
 DECISIONS.md
+
+# Build-time dependencies (tui.js is committed, not built on install)
+node_modules/

@@ -23,7 +23,9 @@ All paths are inside the `opencode-custom` package:
 | `lib/unattended.js` | V2 plugin — hooks, markers, contract/notice injection, idle nudges |
 | `lib/unattended-state.js` | Per-session state (durable `ctx.storage`, file fallback) and artifact paths |
 | `rpc.js` | The `unattended` RPC contract — `status` method, `changed` event |
-| `tui.jsx` | TUI plugin — the sidebar badge of the active session |
+| `tui.jsx` | TUI plugin source — the sidebar badge of the active session |
+| `tui.js` | Compiled `./tui` entry shipped to OpenCode (generated from `tui.jsx`) |
+| `scripts/build-tui.mjs` | Builds `tui.jsx` → `tui.js` (OpenCode's Solid/OpenTUI transform) |
 | `lib/indicator.js` | The badge state machine (unknown is not off) |
 | `commands/unattended.md` | `/unattended` — enter the mode (registered by the plugin) |
 | `commands/unattended-off.md` | `/unattended-off` — hand back mid-session (keep running, write an unattended-only summary) |
@@ -90,6 +92,9 @@ The terminal shows the state of the **active session** in the sidebar:
   armed or disarmed, and the TUI repaints.
 - The server plugin stays the source of truth. The TUI only reads — it asks the
   `unattended` RPC (`rpc.js`) for the state of a session.
+- The installed entry is `tui.js`, compiled from `tui.jsx`: OpenCode does not
+  apply its JSX transform to files inside `node_modules`. After editing the
+  source, run `npm run build` and reinstall/update the plugin.
 - The home screen has no sidebar, so the badge only shows in a session view.
 
 Set `UNATTENDED_DEBUG=1` to see what the TUI half is doing in

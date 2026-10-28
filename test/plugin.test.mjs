@@ -320,6 +320,22 @@ const badEvent = createIndicator({ api: fakeApi(false), retryDelays: [] })
 badEvent.applyEvent({ sessionID: "ses_e" })
 check("an event without a boolean armed is ignored", badEvent.get("ses_e") === undefined)
 
+// ── Packaging: the TUI entry must be compiled JS ────────────────────────────
+// OpenCode skips its Solid JSX transform for files inside node_modules. A
+// ./tui export pointing at tui.jsx fails to load with "Cannot find package
+// 'react'"; the shipped entry must be the compiled tui.js.
+const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, "package.json"), "utf8"))
+const tuiEntry = pkg.exports?.["./tui"]
+check("package exports ./tui", typeof tuiEntry === "string")
+check("TUI entry is compiled JS, not JSX", tuiEntry?.endsWith(".js"))
+const tuiFile = path.join(ROOT, tuiEntry ?? "")
+check("TUI entry file exists", fs.existsSync(tuiFile))
+const tuiCode = fs.readFileSync(tuiFile, "utf8")
+check("TUI entry does not import react", !/["']react(\/|["'])/.test(tuiCode))
+for (const spec of ["@opentui/solid", "solid-js", "@opencode/plugin/tui"]) {
+  check(`TUI entry imports host-provided ${spec}`, tuiCode.includes(`"${spec}"`))
+}
+
 // ── Cleanup ────────────────────────────────────────────────────────────────
 cleanup()
 await sleep(20)

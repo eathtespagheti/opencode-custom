@@ -122,18 +122,27 @@ The plugin's `setup(ctx)` runs once at load and uses the OpenCode V2 plugin API:
 | `/unattended`, `/unattended-off` commands | `ctx.command.transform(...)` — read from `commands/` |
 | per-session arming, contract re-injection, idle nudges, handover notice | `ctx.session.hook("prompt" \| "context")`, `ctx.event.subscribe`, `ctx.storage` |
 | `unattended` RPC (`status` method, `changed` event) | `ctx.rpc.register(...)` — the contract lives in `rpc.js` |
-| the sidebar badge of the TUI | the `./tui` entrypoint (`tui.jsx`): `context.client.rpc(...)` + `context.ui.slot(...)` |
+| the sidebar badge of the TUI | the `./tui` entrypoint (`tui.js`, compiled from `tui.jsx`): `context.client.rpc(...)` + `context.ui.slot(...)` |
 
-No dependencies — plain ESM, the same shape the `superpowers` plugin uses. The
-TUI half imports `@opencode/plugin/tui` and `solid-js`, both provided by
-OpenCode itself.
+No runtime dependencies — plain ESM, the same shape the `superpowers` plugin
+uses. The TUI half imports `@opencode/plugin/tui`, `solid-js` and
+`@opentui/solid`, all provided by OpenCode itself. `@babel/core` and
+`babel-preset-solid` are build-only dev dependencies.
+
+`tui.js` is **generated and committed** on purpose: OpenCode only applies its
+Solid JSX transform to files outside `node_modules`, so an installed package
+must ship compiled JS. Editing `tui.jsx` without rebuilding `tui.js` changes
+nothing for installed users.
 
 ## Layout
 
 ```text
 index.js                            # plugin entry: { id, setup }
 rpc.js                              # the "unattended" RPC contract (shared by both halves)
-tui.jsx                             # TUI (CLI) plugin entry: the sidebar badge
+tui.jsx                             # TUI (CLI) plugin source: the sidebar badge
+tui.js                              # generated from tui.jsx — the published ./tui entry
+scripts/
+  build-tui.mjs                     # compiles tui.jsx -> tui.js (Solid/OpenTUI transform)
 lib/
   unattended.js                     # the unattended plugin half (hooks, contract, nudges)
   unattended-state.js               # per-session state store + artifact paths
@@ -165,13 +174,15 @@ test/
 ## Develop
 
 ```bash
-npm test                             # plugin registration (needs node)
+npm install                          # build-only dependencies (Babel)
+npm run build                        # regenerate tui.js after editing tui.jsx
+npm test                             # plugin registration, packaging, docs-sync
 node skills/unattended/scripts/unattended-selftest.mjs
-python3 test/docs-sync.test.py       # docs-sync checker + agent/skill shape (no node needed)
 ```
 
-Both drive the real code against a mock OpenCode V2 context — no live TUI or
-model needed.
+`npm test` drives the real code against a mock OpenCode V2 context — no live
+TUI or model needed. `tui.js` is committed; rebuild it whenever `tui.jsx`
+changes, or installed users keep loading the old compiled entry.
 
 ## Notes
 
