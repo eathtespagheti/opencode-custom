@@ -94,7 +94,7 @@ The terminal shows the state of the **active session** in the sidebar:
   `unattended` RPC (`rpc.js`) for the state of a session.
 - The installed entry is `tui.js`, compiled from `tui.jsx`: OpenCode does not
   apply its JSX transform to files inside `node_modules`. After editing the
-  source, run `npm run build` and reinstall/update the plugin.
+  source, run `npm run build:tui` and reinstall/update the plugin.
 - The home screen has no sidebar, so the badge only shows in a session view.
 
 Set `UNATTENDED_DEBUG=1` to see what the TUI half is doing in

@@ -175,7 +175,7 @@ test/
 
 ```bash
 npm install                          # build-only dependencies (Babel)
-npm run build                        # regenerate tui.js after editing tui.jsx
+npm run build:tui                    # regenerate tui.js after editing tui.jsx
 npm test                             # plugin registration, packaging, docs-sync
 node skills/unattended/scripts/unattended-selftest.mjs
 ```

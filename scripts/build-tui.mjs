@@ -10,7 +10,8 @@
 // "@opentui/solid"), so the output imports only modules the host provides as
 // virtual modules: @opentui/solid, solid-js and @opencode/plugin/tui.
 //
-// Run `npm run build` after editing tui.jsx and commit the generated tui.js.
+// Run `npm run build:tui` after editing tui.jsx and commit the generated
+// tui.js.
 
 import { mkdir, readFile, writeFile } from "node:fs/promises"
 import { dirname, join } from "node:path"
@@ -33,7 +34,7 @@ const result = await transformAsync(source, {
 if (!result?.code) throw new Error("babel produced no output")
 
 const header = `// GENERATED FILE — do not edit.
-// Source: tui.jsx. Regenerate with \`npm run build\`.
+// Source: tui.jsx. Regenerate with \`npm run build:tui\`.
 //
 // OpenCode does not apply its Solid JSX transform to files inside
 // node_modules, so the installed package must ship compiled JS. The imports

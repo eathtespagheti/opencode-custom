@@ -10,7 +10,7 @@
     "./rpc": "./rpc.js"
   },
   "scripts": {
-    "build": "node scripts/build-tui.mjs",
+    "build:tui": "node scripts/build-tui.mjs",
     "test": "node test/plugin.test.mjs && python3 test/docs-sync.test.py"
   },
   "devDependencies": {

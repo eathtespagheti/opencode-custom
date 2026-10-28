@@ -1,5 +1,5 @@
 // GENERATED FILE — do not edit.
-// Source: tui.jsx. Regenerate with `npm run build`.
+// Source: tui.jsx. Regenerate with `npm run build:tui`.
 //
 // OpenCode does not apply its Solid JSX transform to files inside
 // node_modules, so the installed package must ship compiled JS. The imports
